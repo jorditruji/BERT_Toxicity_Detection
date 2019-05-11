@@ -74,7 +74,13 @@ train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_l
 train_sampler = RandomSampler(train_data)
 batch_size = 1
 
-train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size)
+# Parameters of the data loader
+params = {'batch_size': 16 ,
+          'sampler': train_sampler,
+          'num_workers': 4,
+          'pin_memory': True}
+
+train_dataloader = DataLoader(train_data, **params)
 
 
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=2)
