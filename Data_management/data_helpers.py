@@ -151,7 +151,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
     return features
 
 # Load data
-def read_examples(input_file):
+def read_examples(input_file, output_mode = 'classification'):
     """Read a list of `InputExample`s from an input file."""
     examples = []
     labels = []
@@ -176,6 +176,8 @@ def read_examples(input_file):
                     print(text_a, text_b)
                     text_a = m.group(1)
                     text_b = m.group(2)
+                if output_mode != 'classification':
+                    label = target
                 examples.append(
                     InputExample(guid=unique_id, text_a=text_a, text_b=text_b, label = label))
                 labels.append(label)

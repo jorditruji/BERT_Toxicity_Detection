@@ -37,11 +37,12 @@ logger = logging.getLogger(__name__)
 
 
 
-# Regress or classify
-mode = 'classification'
-#mode = 'regression'
 
-train, labels, toxicity = read_examples('../train.csv')
+# Regress or classify
+mode = 'regression'
+#mode = 'classification'
+
+train, labels, toxicity = read_examples('../train.csv', output_mode = mode)
 print("Sample")
 print(train[0].text_a, train[0].text_b, train[0].target)
 
@@ -55,7 +56,7 @@ n_gpu = 1
 # Bert tokenizer
 maxlen = 84
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case= True)
-num_labels = 2
+num_labels = 1
 
 train_features = convert_examples_to_features(train, ["OK", "Toxic"], maxlen, tokenizer,mode )
 
@@ -82,7 +83,7 @@ params = {'batch_size': 16 ,
 train_dataloader = DataLoader(train_data, **params)
 
 
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=num_labels)
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)
 param_optimizer = list(model.named_parameters())
 no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
 optimizer_grouped_parameters = [
@@ -136,7 +137,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         if step%500 == 0:
           print("Accuracy at step {}: {}, LOSS: {}".format( step, 
             running_corrects/nb_tr_examples,float(tr_loss)/nb_tr_examples))
-    torch.save(model.state_dict(), 'bert_classification_Epoch_'+str(_))
+    torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
     epoch_acc = running_corrects.double().detach() / nb_tr_examples
     epoch_acc = epoch_acc.data.cpu().numpy()
     train_loss = tr_loss/nb_tr_examples
