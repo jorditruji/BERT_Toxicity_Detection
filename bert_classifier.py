@@ -69,6 +69,7 @@ if mode == "classification":
 elif mode == "regression":
     all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.float)
 
+del(train_features)
 train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
 train_sampler = RandomSampler(train_data)
 batch_size = 1
@@ -82,10 +83,9 @@ no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
 optimizer_grouped_parameters = [
     {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
     {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-	]
+]
 
-
-num_train_epochs = 10
+num_train_epochs = 4
 gradient_accumulation_steps = 1
 num_train_optimization_steps = int(len(train) / batch_size ) * num_train_epochs
 print(num_train_optimization_steps)
@@ -119,15 +119,22 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
 
         # Select maximum score index
         _, preds = torch.max(logits, 1)
-        running_corrects += torch.sum(preds == labels.data)
+
+        running_corrects += float(torch.sum(preds.data == label_ids.data))
         tr_loss += loss.item()
         nb_tr_examples += input_ids.size(0)
-        nb_tr_steps += 1
 
+        nb_tr_steps += 1
         optimizer.step()
         optimizer.zero_grad()
         global_step += 1
-
+        if step%500 == 0:
+          print("Accuracy at step {}: {}, LOSS: {}".format( step, 
+            running_corrects/nb_tr_examples,float(tr_loss)/nb_tr_examples))
+    torch.save(model.state_dict(), 'bert_classification_Epoch_'+str(_))
     epoch_acc = running_corrects.double().detach() / nb_tr_examples
     epoch_acc = epoch_acc.data.cpu().numpy()
-    print("Epoch {}, accuracy: {}".format(_, epoch_acc))
+    train_loss = tr_loss/nb_tr_examples
+    print("Epoch {}, accuracy: {}, loss: {}".format(_, epoch_acc,train_loss ))
+
+torch.save(model.state_dict(), 'bert_classification')
