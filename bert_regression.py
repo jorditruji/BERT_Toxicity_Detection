@@ -28,7 +28,7 @@ from pytorch_pretrained_bert.tokenization import BertTokenizer
 from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
 
 from Data_management.data_helpers import InputFeatures, InputExample, convert_examples_to_features, read_examples
-
+import torch.nn.functional as F
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s', 
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -74,8 +74,9 @@ del(train_features)
 train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
 train_sampler = RandomSampler(train_data)
 
+batch_size = 16
 # Parameters of the data loader
-params = {'batch_size': 16 ,
+params = {'batch_size': batch_size ,
           'sampler': train_sampler,
           'num_workers': 4,
           'pin_memory': True}
@@ -120,6 +121,8 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
         elif mode == "regression":
             loss_fct = MSELoss()
+            # Target tocicity is between 0 and 1
+            logits = F.sigmoid(logits)
             loss = loss_fct(logits.view(-1), label_ids.view(-1))
         loss.backward()
 

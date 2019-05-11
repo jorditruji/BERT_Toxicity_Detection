@@ -73,8 +73,9 @@ del(train_features)
 train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
 train_sampler = RandomSampler(train_data)
 
+batch_size = 16
 # Parameters of the data loader
-params = {'batch_size': 16 ,
+params = {'batch_size': batch_size ,
           'sampler': train_sampler,
           'num_workers': 4,
           'pin_memory': True}
