@@ -73,7 +73,7 @@ del(train_features)
 train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
 train_sampler = RandomSampler(train_data)
 
-batch_size = 16
+batch_size = 8
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
           'sampler': train_sampler,
@@ -92,12 +92,12 @@ optimizer_grouped_parameters = [
 ]
 
 num_train_epochs = 4
-gradient_accumulation_steps = 1
+gradient_accumulation_steps = 2
 num_train_optimization_steps = int(len(train) / batch_size ) * num_train_epochs
 print(num_train_optimization_steps)
 
 optimizer = BertAdam(optimizer_grouped_parameters,
-                     lr=5e-5,
+                     lr=2e-5,
                      warmup=0.1,
                      t_total=num_train_optimization_steps)
 global_step = 0
@@ -131,9 +131,10 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         nb_tr_examples += input_ids.size(0)
 
         nb_tr_steps += 1
-        optimizer.step()
-        optimizer.zero_grad()
-        global_step += 1
+        if (step+1)%gradient_accumulation_steps == True
+            optimizer.step()
+            optimizer.zero_grad()
+            global_step += 1
         if step%500 == 0:
           print("Accuracy at step {}: {}, LOSS: {}".format( step, 
             running_corrects/nb_tr_examples,float(tr_loss)/nb_tr_examples))
