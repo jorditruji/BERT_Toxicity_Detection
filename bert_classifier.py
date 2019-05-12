@@ -50,7 +50,6 @@ print(train[0].text_a, train[0].text_b, train[0].target)
 #test = pd.read_csv('../input/jigsaw-unintended-bias-in-toxicity-classification/test.csv', index_col='id')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = 'cpu'
 n_gpu = 1
 # Bert tokenizer
 maxlen = 84
