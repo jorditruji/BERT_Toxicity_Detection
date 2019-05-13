@@ -67,7 +67,7 @@ data_save['all_label_ids'] = all_label_ids
 
 
 filename = 'classification_slen84.pkl'
-fileObject = open(fileName, 'wb')
+fileObject = open(filename, 'wb')
 pkl.dump(data_save, fileObject)
 fileObject.close()
 

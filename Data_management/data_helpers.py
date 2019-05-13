@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import csv
 import re
-from sklearn.model_selection import train_test_split
+import random
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s', 
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -189,14 +189,32 @@ def read_examples(input_file, output_mode = 'classification'):
 
 
 def read_from_pkl(fname):
+    # reads pickled dataset, u can pickle the dataset using prepare_dataset
     with (open(fname, "rb")) as openfile:
         data = pickle.load(openfile)
     return data
 
 def read_splits(fname, test_size = 0.3, random_state = 1993):
+    # Reads pickled data and returns train_test splits
     data = read_from_pkl(fname)
-    labels = data['all_label_ids']
-    features = list(zip(data['all_input_ids'], data['all_input_mask'], data['all_segment_ids']))
-    x_train, x_test, y_train, y_test = train_test_split(data, labels, 
-                test_size=test_size, random_state = random_state, shuffle=False)
+    labels = np.array(data['all_label_ids'],dtype= int)
+
+    # shuffle it 
+    #np.random.shuffle(labels)
+
+    # Keep class distribution between partitions
+    n_samples = labels.shape[0]
+    n_toxics = np.sum(labels == 1)
+    n_OK = n_samples - n_toxics
+    print("Found {} samples. {} toxic comments and {} no toxics".format(n_samples,n_toxics, n_OK))
+    
+    # So let's get the partitions now:
+    bools_toxic = labels == 1
+    # Get indexs of the toxic comments
+    idx_toxic = list(filter(lambda i: interest_avs_bools[i], range(len(interest_avs_bools))))   
+    idx_test = labels[idx_toxic[0:int(test_size*n_toxics)]]
+
+    idx_train = labels[int(test_size*n_toxics)]
+
+
     return x_train, y_train,x_test, y_test
