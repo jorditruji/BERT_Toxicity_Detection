@@ -62,7 +62,7 @@ del(train_features)
 data_save = [all_input_ids.numpy(), all_input_mask.numpy(), all_segment_ids.numpy(), all_label_ids.numpy()]
 
 filename = 'classification_slen84'
-fileObject = open(fileName, 'wb')
+fileObject = open(filename, 'wb')
 
 
 pkl.dump(data_save, fileObject)
