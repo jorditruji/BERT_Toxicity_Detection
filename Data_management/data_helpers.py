@@ -184,3 +184,10 @@ def read_examples(input_file, output_mode = 'classification'):
                 toxicity.append(target)
                 unique_id += 1
     return examples, labels, toxicity
+
+
+
+def read_from_pkl(fname):
+    with (open(fname, "rb")) as openfile:
+        data = pickle.load(openfile)
+    return data

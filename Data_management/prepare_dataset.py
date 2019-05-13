@@ -47,24 +47,27 @@ num_labels = 2
 train_features = convert_examples_to_features(train, ["OK", "Toxic"], maxlen, tokenizer,mode )
 
 
-all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
-all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
-all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
+all_input_ids = [f.input_ids for f in train_features]
+all_input_mask = [f.input_mask for f in train_features]
+all_segment_ids = [f.segment_ids for f in train_features]
 
 if mode == "classification":
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
+    all_label_ids = [f.label_id for f in train_features]
 elif mode == "regression":
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.float)
+    all_label_ids = [f.label_id for f in train_features]
 
 del(train_features)
 #train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
 
-data_save = [all_input_ids.numpy(), all_input_mask.numpy(), all_segment_ids.numpy(), all_label_ids.numpy()]
+data_save = {}
+data_save['all_input_ids'] = all_input_ids
+data_save['all_input_mask'] = all_input_mask
+data_save['all_segment_ids'] = all_segment_ids
+data_save['all_label_ids'] = all_label_ids
 
-filename = 'classification_slen84'
+
+filename = 'classification_slen84.pkl'
 fileObject = open(fileName, 'wb')
-
-
 pkl.dump(data_save, fileObject)
 fileObject.close()
 
