@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import csv
 import re
+from sklearn.model_selection import train_test_split
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s', 
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -191,3 +192,11 @@ def read_from_pkl(fname):
     with (open(fname, "rb")) as openfile:
         data = pickle.load(openfile)
     return data
+
+def read_splits(fname, test_size = 0.3, random_state = 1993):
+    data = read_from_pkl(fname)
+    labels = data['all_label_ids']
+    features = list(zip(data['all_input_ids'], data['all_input_mask'], data['all_segment_ids']))
+    x_train, x_test, y_train, y_test = train_test_split(data, labels, 
+                test_size=test_size, random_state = random_state, shuffle=False)
+    return x_train, y_train,x_test, y_test
