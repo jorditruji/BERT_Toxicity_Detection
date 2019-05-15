@@ -30,15 +30,15 @@ from data_helpers import InputFeatures, InputExample, convert_examples_to_featur
 
 
 
+mode = 'regression'
 
-
-train, labels, toxicity = read_examples('../../train.csv')
+train, labels, toxicity = read_examples('../../train.csv', output_mode = mode)
 
 
 #train = pd.read_csv('../../Datasets/kaggle/train.csv', index_col='id')
 #test = pd.read_csv('../input/jigsaw-unintended-bias-in-toxicity-classification/test.csv', index_col='id')
 
-mode = 'classification'
+mode = 'regression'
 # Bert tokenizer
 maxlen = 84
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case= True)
