@@ -5,6 +5,11 @@ import logging
 import csv
 import re
 import random
+from random import randrange, shuffle
+from sklearn.model_selection import StratifiedShuffleSplit 
+import pickle
+import numpy as np
+
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s', 
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -226,6 +231,8 @@ def read_examples(input_file, output_mode = 'classification'):
                 labels.append(label)
                 toxicity.append(target)
                 unique_id += 1
+                if _i == 400:
+                    break
 
 
     return examples, labels, toxicity
@@ -238,26 +245,42 @@ def read_from_pkl(fname):
         data = pickle.load(openfile)
     return data
 
-def read_splits(fname, test_size = 0.3, random_state = 1993):
+def read_splits(fname, train_size = 0.7, random_state = 1993):
     # Reads pickled data and returns train_test splits
     data = read_from_pkl(fname)
-    print(np.array(data).shape)
-    labels = np.array(data['all_label_ids'],dtype= int)
+    labels = np.array(data['all_label_ids'],dtype= float)
+    # 5 Toxicity bins
+    thresholds = [(0,0.2), (0.2,0.4) , (0.4,0.6), (0.6,0.8) ,(0.8,2 )]
+    idx_train = []
+    idx_test = []
+    totals = []
+    for low,high in thresholds:
+        # Filter bin
+        partition = (labels>=low)*(labels<high)
+        partition_idx = np.where(partition)[0]
 
-    # shuffle it 
-    #np.random.shuffle(labels)
+        # Calculate how many samples we need for each partition
+        n_train_samples = int(train_size*partition_idx.shape[0])
+        # Get train indices
+        #train_part_idx = random.choices(partition_idx, k=n_train_samples)
+        print(partition_idx.shape[0])
+        partition_idx = list(partition_idx)
+        shuffle(partition_idx)
+        train_part_idx = partition_idx[0:n_train_samples]
 
-    # Keep class distribution between partitions
-    n_samples = labels.shape[0]
-    n_toxics = np.sum(labels == 1)
-    n_OK = n_samples - n_toxics
-    print("Found {} samples. {} toxic comments and {} no toxics".format(n_samples,n_toxics, n_OK))
+        idx_train+=list(train_part_idx)
+        # Get test indices
+        idx_test += [idx for idx in partition_idx if idx not in idx_train]
     
-    # So let's get the partitions now:
-    bools_toxic = labels == 1
-    # Get indexs of the toxic comments
-    idx_toxic = list(filter(lambda i: interest_avs_bools[i], range(len(interest_avs_bools))))   
-    idx_test = labels[idx_toxic[0:int(test_size*n_toxics)]]
+    print(len(idx_train), len(set(idx_train)))
+    print(len(idx_test), len(set(idx_test)))
 
-    idx_train = labels[int(test_size*n_toxics)]
-    return x_train, y_train,x_test, y_test
+    print("Found {} samples. {} train comments and {} val comments".format(labels.shape[0],len(idx_train), len(idx_test)))
+
+    return idx_train, idx_test
+
+
+
+if __name__ == '__main__':
+    fname = 'classification_slen84.pkl'
+    read_splits(fname, train_size = 0.7, random_state = 1993)
