@@ -15,16 +15,17 @@ logger = logging.getLogger(__name__)
 class InputFeatures(object):
     """A single set of features of data."""
 
-    def __init__(self, input_ids, input_mask, segment_ids, label_id, target = None):
+    def __init__(self, input_ids, input_mask, segment_ids, label_id, weight, target = None):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.label_id = label_id
+        self.weight = weight
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
 
-    def __init__(self, guid, text_a, text_b=None, label=None, target = None):
+    def __init__(self, guid, text_a, weight, text_b=None, label=None, target = None):
         """Constructs a InputExample.
         Args:
             guid: Unique id for the example.
@@ -40,6 +41,7 @@ class InputExample(object):
         self.text_b = text_b
         self.label = label
         self.target = target
+        self.weight = weight
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     """Truncates a sequence pair in place to the maximum length."""
@@ -148,7 +150,8 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
                 InputFeatures(input_ids=input_ids,
                               input_mask=input_mask,
                               segment_ids=segment_ids,
-                              label_id=label_id))
+                              label_id=label_id,
+                              weight = example.weight))
     return features
 
 # Load data
@@ -157,11 +160,25 @@ def read_examples(input_file, output_mode = 'classification'):
     examples = []
     labels = []
     toxicity = []
+    weights = []
     unique_id = 0
+
+    # Comments with the following indentities will have a higher wright in the loss
+    identity_columns = [
+        'male', 'female', 'homosexual_gay_or_lesbian', 'christian', 'jewish',
+        'muslim', 'black', 'white', 'psychiatric_or_mental_illness']
     with open(input_file, "r", encoding='utf-8') as reader:
         csv_reader = csv.reader(reader, delimiter=',')
         for _i, line in enumerate(csv_reader):
-            if _i:
+
+            if _i == 0:
+                # Get headers and look for identity columnns
+                headers = list(line)
+                # Stores its positions for futher use
+                interesting_positions = [headers.index(interest_identity) for interest_identity in identity_columns]
+
+            else:
+                # Get toxicity ground truth
                 target = float(line[1])
                 if target >= 0.5:
                 	label = "Toxic"
@@ -177,13 +194,40 @@ def read_examples(input_file, output_mode = 'classification'):
                     print(text_a, text_b)
                     text_a = m.group(1)
                     text_b = m.group(2)
+                # store class or float toxicity depending on mode
                 if output_mode != 'classification':
                     label = target
+
+                # Calculate weight
+                weight = 0.25
+                # Subgroup:
+
+                weight+= 0.25*(sum([float(line[interest])>=0.5 for interest in interesting_positions if line[interest] !=''])>=1)
+                # Background Positive, Subgroup Negative
+                weight+=0.25*((target>=0.5)*sum([float(line[interest])<0.5 for interest in interesting_positions if line[interest] !=''])>=1)
+                # Background Negative, Subgroup Positive
+                weight+= 0.25*((target<0.5)*sum([float(line[interest])>=0.5 for interest in interesting_positions if line[interest] !=''])>=1)
+                # Original implementation
+                '''
+                # Overall
+                weights = np.ones((len(x_train),)) / 4
+                # Subgroup
+                weights += (train[identity_columns].fillna(0).values>=0.5).sum(axis=1).astype(bool).astype(np.int) / 4
+                # Background Positive, Subgroup Negative
+                weights += (( (train['target'].values>=0.5).astype(bool).astype(np.int) +
+                   (train[identity_columns].fillna(0).values<0.5).sum(axis=1).astype(bool).astype(np.int) ) > 1 ).astype(bool).astype(np.int) / 4
+                # Background Negative, Subgroup Positive
+                weights += (( (train['target'].values<0.5).astype(bool).astype(np.int) +
+                   (train[identity_columns].fillna(0).values>=0.5).sum(axis=1).astype(bool).astype(np.int) ) > 1 ).astype(bool).astype(np.int) / 4
+                
+                '''
                 examples.append(
-                    InputExample(guid=unique_id, text_a=text_a, text_b=text_b, label = label))
+                    InputExample(guid=unique_id, text_a=text_a, text_b=text_b, label = label, weight = weight))
                 labels.append(label)
                 toxicity.append(target)
                 unique_id += 1
+
+
     return examples, labels, toxicity
 
 
@@ -197,6 +241,7 @@ def read_from_pkl(fname):
 def read_splits(fname, test_size = 0.3, random_state = 1993):
     # Reads pickled data and returns train_test splits
     data = read_from_pkl(fname)
+    print(np.array(data).shape)
     labels = np.array(data['all_label_ids'],dtype= int)
 
     # shuffle it 
@@ -215,6 +260,4 @@ def read_splits(fname, test_size = 0.3, random_state = 1993):
     idx_test = labels[idx_toxic[0:int(test_size*n_toxics)]]
 
     idx_train = labels[int(test_size*n_toxics)]
-
-
     return x_train, y_train,x_test, y_test

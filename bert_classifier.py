@@ -83,7 +83,7 @@ train_dataloader = DataLoader(train_data, **params)
 
 
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=num_labels)
-param_optimizer = list(model.named_parameters())
+param_optimizer = list(model.named_parameters())model
 no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
 optimizer_grouped_parameters = [
     {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},

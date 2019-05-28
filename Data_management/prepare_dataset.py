@@ -32,7 +32,7 @@ from data_helpers import InputFeatures, InputExample, convert_examples_to_featur
 
 
 
-train, labels, toxicity = read_examples('../../train.csv')
+train, labels, toxicity = read_examples('../../../Datasets/kaggle/train.csv')
 
 
 #train = pd.read_csv('../../Datasets/kaggle/train.csv', index_col='id')
@@ -50,6 +50,7 @@ train_features = convert_examples_to_features(train, ["OK", "Toxic"], maxlen, to
 all_input_ids = [f.input_ids for f in train_features]
 all_input_mask = [f.input_mask for f in train_features]
 all_segment_ids = [f.segment_ids for f in train_features]
+all_weights = [f.weight for f in train_features]
 
 if mode == "classification":
     all_label_ids = [f.label_id for f in train_features]
@@ -64,6 +65,7 @@ data_save['all_input_ids'] = all_input_ids
 data_save['all_input_mask'] = all_input_mask
 data_save['all_segment_ids'] = all_segment_ids
 data_save['all_label_ids'] = all_label_ids
+data_save['all_weights'] = all_weights
 
 
 filename = 'classification_slen84.pkl'
