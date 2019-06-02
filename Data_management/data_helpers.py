@@ -231,8 +231,7 @@ def read_examples(input_file, output_mode = 'classification'):
                 labels.append(label)
                 toxicity.append(target)
                 unique_id += 1
-                if _i == 400:
-                    break
+
 
 
     return examples, labels, toxicity

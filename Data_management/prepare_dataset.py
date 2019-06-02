@@ -33,7 +33,7 @@ from data_helpers import InputFeatures, InputExample, convert_examples_to_featur
 mode = 'regression'
 
 
-train, labels, toxicity = read_examples('../../../Datasets/kaggle/train.csv', output_mode = mode)
+train, labels, toxicity = read_examples('../train.csv', output_mode = mode)
 
 
 #train = pd.read_csv('../../Datasets/kaggle/train.csv', index_col='id')
