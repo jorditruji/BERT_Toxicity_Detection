@@ -69,7 +69,7 @@ test_sampler = RandomSampler(train_data)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-batch_size = 16
+batch_size = 48
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
           'sampler': train_sampler,
@@ -118,7 +118,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             loss_fct = MSELoss()
             # Target tocicity is between 0 and 1
             logits = F.sigmoid(logits)
-            loss = loss_fct(logits.view(-1), label_ids.view(-1))
+            loss = loss_fct(10*logits.view(-1), 10*label_ids.view(-1))
         loss.backward()
 
         # Select maximum score index
