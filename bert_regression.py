@@ -89,7 +89,7 @@ optimizer_grouped_parameters = [
 
 num_train_epochs = 4
 gradient_accumulation_steps = 1
-num_train_optimization_steps = int(len(train) / batch_size ) * num_train_epochs
+num_train_optimization_steps = int(len(train_data) / batch_size ) * num_train_epochs
 print(num_train_optimization_steps)
 
 optimizer = BertAdam(optimizer_grouped_parameters,
