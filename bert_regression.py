@@ -44,13 +44,22 @@ mode = 'regression'
 data = read_from_pkl('Data_management/classification_slen84.pkl')
 idx_partitions = np.load('Data_management/partition_idx.npy').item()
 
-all_label_ids = np.array(data['all_label_ids'],dtype= float)
-all_input_ids = np.array(data['all_input_ids'],dtype= int)
-all_input_mask =  np.array(data['all_input_mask'],dtype= int)
-all_segment_ids =  np.array(data['all_segment_ids'],dtype= int)
-all_weights =  np.array(data['all_weights'],dtype= float)
+all_label_ids = torch.tensor(data['all_label_ids'], dtype=torch.float)
+all_input_ids = torch.tensor(data['all_input_ids'], dtype= torch.long)
+all_input_mask =  torch.tensor(data['all_input_mask'], dtype= torch.long)
+all_segment_ids =  torch.tensor(data['all_segment_ids'], dtype= torch.long)
+all_weights =  torch.tensor(data['all_weights'], dtype= torch.long)
 
+'''
+all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
+all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
+all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
 
+if mode == "classification":
+    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
+elif mode == "regression":
+    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.float)
+'''
 
 train_data = TensorDataset(all_input_ids[idx_partitions['train']], all_input_mask[idx_partitions['train']], all_segment_ids[idx_partitions['train']], all_label_ids[idx_partitions['train']])
 train_sampler = RandomSampler(train_data)
