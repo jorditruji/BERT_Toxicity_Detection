@@ -266,17 +266,20 @@ def read_splits(fname, train_size = 0.7, random_state = 1993):
         partition_idx = list(partition_idx)
         shuffle(partition_idx)
         train_part_idx = partition_idx[0:n_train_samples]
-        print(len(partition_idx), " samples in the bin")
 
         idx_train+=list(train_part_idx)
+        print(len(partition_idx), " samples in the bin")
+
         # Get test indices
-        idx_test += [idx for idx in partition_idx if idx not in idx_train]
+        idx_test += Diff(partition_idx, list(train_part_idx))
+        print(len(partition_idx), " samples in the bin")
 
     print("Found {} samples. {} train comments and {} val comments".format(labels.shape[0],len(idx_train), len(idx_test)))
 
     return idx_train, idx_test
 
-
+def Diff(li1, li2): 
+    return list(set(li1) - set(li2))
 
 if __name__ == '__main__':
     fname = 'classification_slen84.pkl'

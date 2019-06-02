@@ -7,7 +7,7 @@ import logging
 import os
 import random
 import sys
-import pandas as pd 
+
 import numpy as np
 import re
 import torch
