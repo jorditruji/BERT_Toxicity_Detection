@@ -266,7 +266,7 @@ def read_splits(fname, train_size = 0.7, random_state = 1993):
         partition_idx = list(partition_idx)
         shuffle(partition_idx)
         train_part_idx = partition_idx[0:n_train_samples]
-        print(partition_idx.shape[0], " samples in the bin")
+        print(len(partition_idx), " samples in the bin")
 
         idx_train+=list(train_part_idx)
         # Get test indices
