@@ -245,7 +245,7 @@ def read_from_pkl(fname):
     return data
 
 def read_splits(fname, train_size = 0.7, random_state = 1993):
-    # Reads pickled data and returns train_test splits
+    # Reads pickled data and returns train_test splits, not the fastest but u should jsut run it one time
     data = read_from_pkl(fname)
     labels = np.array(data['all_label_ids'],dtype= float)
     # 5 Toxicity bins
@@ -262,17 +262,15 @@ def read_splits(fname, train_size = 0.7, random_state = 1993):
         n_train_samples = int(train_size*partition_idx.shape[0])
         # Get train indices
         #train_part_idx = random.choices(partition_idx, k=n_train_samples)
-        print(partition_idx.shape[0])
+        print(partition_idx.shape[0], " samples in the bin")
         partition_idx = list(partition_idx)
         shuffle(partition_idx)
         train_part_idx = partition_idx[0:n_train_samples]
+        print(partition_idx.shape[0], " samples in the bin")
 
         idx_train+=list(train_part_idx)
         # Get test indices
         idx_test += [idx for idx in partition_idx if idx not in idx_train]
-    
-    print(len(idx_train), len(set(idx_train)))
-    print(len(idx_test), len(set(idx_test)))
 
     print("Found {} samples. {} train comments and {} val comments".format(labels.shape[0],len(idx_train), len(idx_test)))
 
@@ -282,4 +280,8 @@ def read_splits(fname, train_size = 0.7, random_state = 1993):
 
 if __name__ == '__main__':
     fname = 'classification_slen84.pkl'
-    read_splits(fname, train_size = 0.7, random_state = 1993)
+    idx_train, idx_test = read_splits(fname, train_size = 0.7, random_state = 1993)
+    save = {}
+    save['train'] = idx_train
+    save['val'] = idx_test
+    np.save('partition_idx.npy', save)
