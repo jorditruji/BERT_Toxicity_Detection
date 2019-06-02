@@ -78,7 +78,7 @@ params = {'batch_size': batch_size ,
 
 train_dataloader = DataLoader(train_data, **params)
 
-
+num_labels= 1
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)
 param_optimizer = list(model.named_parameters())
 no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
