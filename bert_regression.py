@@ -27,7 +27,7 @@ from pytorch_pretrained_bert.modeling import BertForSequenceClassification, Bert
 from pytorch_pretrained_bert.tokenization import BertTokenizer
 from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
 
-from Data_management.data_helpers import InputFeatures, InputExample, convert_examples_to_features, read_examples
+from Data_management.data_helpers import InputFeatures, InputExample, convert_examples_to_features, read_examples, read_from_pkl
 import torch.nn.functional as F
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s', 
@@ -40,44 +40,31 @@ logger = logging.getLogger(__name__)
 
 # Regress or classify
 mode = 'regression'
-#mode = 'classification'
 
-train, labels, toxicity = read_examples('../train.csv', output_mode = mode)
-print("Sample")
-print(train[0].text_a, train[0].text_b, train[0].target)
+data = read_from_pkl('Data_management/classification_slen84.pkl')
+idx_partitions = np.load('Data_management/partition_idx.npy').item()
+
+all_label_ids = np.array(data['all_label_ids'],dtype= float)
+all_input_ids = np.array(data['all_input_ids'],dtype= int)
+all_input_mask =  np.array(data['all_input_mask'],dtype= int)
+all_segment_ids =  np.array(data['all_segment_ids'],dtype= int)
+all_weights =  np.array(data['all_weights'],dtype= float)
 
 
-#train = pd.read_csv('../../Datasets/kaggle/train.csv', index_col='id')
-#test = pd.read_csv('../input/jigsaw-unintended-bias-in-toxicity-classification/test.csv', index_col='id')
+
+train_data = TensorDataset(all_input_ids[idx_partitions['train']], all_input_mask[idx_partitions['train']], all_segment_ids[idx_partitions['train']], all_label_ids[idx_partitions['train']])
+train_sampler = RandomSampler(train_data)
+
+test_data = TensorDataset(all_input_ids[idx_partitions['val']], all_input_mask[idx_partitions['val']], all_segment_ids[idx_partitions['val']], all_label_ids[idx_partitions['val']])
+test_sampler = RandomSampler(train_data)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-n_gpu = 1
-# Bert tokenizer
-maxlen = 84
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case= True)
-num_labels = 1
-
-train_features = convert_examples_to_features(train, ["OK", "Toxic"], maxlen, tokenizer,mode )
-
-
-all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
-all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
-all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
-
-if mode == "classification":
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
-elif mode == "regression":
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.float)
-
-del(train_features)
-train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
-train_sampler = RandomSampler(train_data)
 
 batch_size = 16
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
           'sampler': train_sampler,
-          'num_workers': 4,
+          'num_workers': 6,
           'pin_memory': True}
 
 train_dataloader = DataLoader(train_data, **params)

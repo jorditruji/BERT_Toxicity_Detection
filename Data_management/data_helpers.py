@@ -281,6 +281,10 @@ def read_splits(fname, train_size = 0.7, random_state = 1993):
 def Diff(li1, li2): 
     return list(set(li1) - set(li2))
 
+
+
+
+
 if __name__ == '__main__':
     fname = 'classification_slen84.pkl'
     idx_train, idx_test = read_splits(fname, train_size = 0.7, random_state = 1993)
