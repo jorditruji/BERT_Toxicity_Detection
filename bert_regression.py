@@ -18,7 +18,7 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
-from torch.nn import CrossEntropyLoss, MSELoss
+from torch.nn import CrossEntropyLoss, MSELoss, BCEWithLogitsLoss
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import matthews_corrcoef, f1_score
 
@@ -91,7 +91,13 @@ trained = torch.load(weights_path,map_location='cpu')
 
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
 
+if mode == "classification":
+    loss_fct = CrossEntropyLoss()
 
+elif mode == "regression":
+    #Class weights
+    pos_weight = torch.tensor([1, 20]).to(device)
+    loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight)
 
 
 param_optimizer = list(model.named_parameters())
@@ -126,13 +132,15 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         # define a new function to compute loss values for both output_modes
         logits = model(input_ids, segment_ids, input_mask, labels=None)
         if mode == "classification":
-            loss_fct = CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+            loss = loss_fct(logits, label_ids)
         elif mode == "regression":
-            loss_fct = MSELoss()
+            # Weights
+            pos_weight = torch.ones([64])
+            #loss_fct = MSELoss()
             # Target tocicity is between 0 and 1
-            logits = F.sigmoid(logits)
-            loss = loss_fct(10*logits.view(-1), 10*label_ids.view(-1))
+            #logits = F.sigmoid(logits)
+            loss = loss_fct(label_ids.view(-1),logits.view(-1) )
+
         loss.backward()
 
         # Select maximum score index
