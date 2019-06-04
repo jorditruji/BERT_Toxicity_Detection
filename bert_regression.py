@@ -141,8 +141,9 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             optimizer.zero_grad()
             global_step += 1
         if step%500 == 0:
-          print(" at step {}: , LOSS: {}".format( step, 
-            float(tr_loss)/nb_tr_examples))
+          print(" Step {}: , MSE, accuracy: {}".format( step, 
+            float(tr_loss)/nb_tr_examples),float(running_corrects)/nb_tr_examples)
+        break
     torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
     epoch_acc = running_corrects.double().detach() / nb_tr_examples
     epoch_acc = epoch_acc.data.cpu().numpy()
