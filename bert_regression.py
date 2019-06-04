@@ -96,7 +96,7 @@ if mode == "classification":
 
 elif mode == "regression":
     #Class weights
-    pos_weight = torch.tensor([1, 20]).to(device)
+    pos_weight = torch.tensor([1.]).to(device)
     loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight)
 
 
@@ -113,7 +113,7 @@ num_train_optimization_steps = int(len(train_data) / batch_size ) * num_train_ep
 print(num_train_optimization_steps)
 
 optimizer = BertAdam(optimizer_grouped_parameters,
-                     lr=5e-5,
+                     lr=1e-5,
                      warmup=0.1,
                      t_total=num_train_optimization_steps)
 global_step = 0
@@ -135,7 +135,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             loss = loss_fct(logits, label_ids)
         elif mode == "regression":
             # Weights
-            pos_weight = torch.ones([64])
+            #pos_weight = torch.ones([64])
             #loss_fct = MSELoss()
             # Target tocicity is between 0 and 1
             #logits = F.sigmoid(logits)
