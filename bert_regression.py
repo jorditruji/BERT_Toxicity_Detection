@@ -128,7 +128,8 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             print(logits.size(), logits, label_ids)
             #Boolean torchie tensor for toxics vs no tocisx
             preds = logits >= 0.5
-            running_corrects += torch.sum(label_ids==preds) 
+            ground_truth = label_ids >= 0.5
+            running_corrects += torch.sum(ground_truth==preds) 
 
 
         tr_loss += loss.item()
