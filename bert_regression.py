@@ -141,22 +141,29 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             ___, preds = torch.max(logits, 1)
         elif mode == "regression":
             #Boolean torchie tensor for toxics vs no tocisx
+            print(logits.data)
             logits = F.sigmoid(logits)
+            print(logits.data)
             preds = logits >= 0.5
+            #print(logits,preds)
+            print(label_ids.data)
             ground_truth = label_ids >= 0.5
-            running_corrects += torch.sum(ground_truth==preds) 
+            #print(label_ids, ground_truth)
+            running_corrects += torch.sum(ground_truth==preds.view(-1)) 
+            #print(running_corrects, ground_truth == preds)
 
         # Track losses, amont of samples and amount of gradient steps
         tr_loss += loss.item()
         nb_tr_examples += input_ids.size(0)
-
+        #print(float(running_corrects), nb_tr_examples)
         nb_tr_steps += 1
+        print(nb_tr_examples, running_corrects, float(running_corrects)/nb_tr_examples)
         if (step+1)%gradient_accumulation_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
             global_step += 1
         if step%500 == 0:
-            print(running_corrects)
+            #print(running_corrects)
             print(" Step {}: ,MSE: {}, accuracy: {}".format( step, 
                 float(tr_loss)/nb_tr_examples,float(running_corrects)/nb_tr_examples))
         
