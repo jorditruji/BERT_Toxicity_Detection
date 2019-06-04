@@ -84,12 +84,14 @@ params = {'batch_size': batch_size ,
 train_dataloader = DataLoader(train_data, **params)
 
 num_labels= 1
-model_old = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)
 
 # Load weights
 weights_path = 'bert_trained_1_epoch'
 trained = torch.load(weights_path,map_location='cpu')
 model = load_weights_sequential(model_old, trained)
+
+model_old = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
+
 
 
 
