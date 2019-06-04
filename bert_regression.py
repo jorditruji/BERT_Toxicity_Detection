@@ -36,6 +36,11 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
 logger = logging.getLogger(__name__)
 
 
+# weights_loader
+def load_weights_sequential(target, source_state):
+    model_to_load= {k: v for k, v in source_state.items() if k in target.state_dict().keys()}
+    target.load_state_dict(model_to_load)
+
 
 
 # Regress or classify
@@ -80,6 +85,14 @@ train_dataloader = DataLoader(train_data, **params)
 
 num_labels= 1
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)
+
+# Load weights
+weights_path = ''
+trained = torch.load(weights_path,map_location='cpu')
+model = load_weights_sequential(model, trained)
+
+
+
 param_optimizer = list(model.named_parameters())
 no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
 optimizer_grouped_parameters = [
@@ -125,7 +138,6 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         if mode == "classification":
             ___, preds = torch.max(logits, 1)
         elif mode == "regression":
-            print(logits.size(), logits, label_ids)
             #Boolean torchie tensor for toxics vs no tocisx
             preds = logits >= 0.5
             ground_truth = label_ids >= 0.5
@@ -141,7 +153,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             optimizer.zero_grad()
             global_step += 1
         if step%500 == 0:
-          print(" Step {}: , MSE, accuracy: {}".format( step, 
+          print(" Step {}: ,MSE: {}, accuracy: {}".format( step, 
             float(tr_loss)/nb_tr_examples),float(running_corrects)/nb_tr_examples)
         break
     torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
