@@ -102,7 +102,7 @@ tr_loss = 0
 model.train()
 model.to(device)
 for _ in trange(int(num_train_epochs), desc="Epoch"):
-    running_corrects = 0
+    running_corrects = 0.
     tr_loss = 0
     nb_tr_examples, nb_tr_steps = 0, 0
     for step, batch in enumerate(train_dataloader):
@@ -122,7 +122,14 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         loss.backward()
 
         # Select maximum score index
-        _, preds = torch.max(logits, 1)
+        if mode == "classification":
+            ___, preds = torch.max(logits, 1)
+        elif mode == "regression":
+            print(logits.size(), logits, label_ids)
+            #Boolean torchie tensor for toxics vs no tocisx
+            preds = logits >= 0.5
+            running_corrects += torch.sum(label_ids==preds) 
+
 
         tr_loss += loss.item()
         nb_tr_examples += input_ids.size(0)
