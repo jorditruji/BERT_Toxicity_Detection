@@ -89,7 +89,7 @@ num_labels= 1
 weights_path = 'bert_trained_1_epoch'
 trained = torch.load(weights_path,map_location='cpu')
 
-model_old = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
 
 
 
