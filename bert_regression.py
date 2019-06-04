@@ -89,7 +89,7 @@ if mode == "classification":
 
 elif mode == "regression":
     #Class weights
-    pos_weight = torch.tensor([1.]).to(device)
+    pos_weight = torch.tensor([1.5]).to(device)
     loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight)
 
 
@@ -106,7 +106,7 @@ num_train_optimization_steps = int(len(train_data) / batch_size ) * num_train_ep
 print(num_train_optimization_steps)
 
 optimizer = BertAdam(optimizer_grouped_parameters,
-                     lr=1e-5,
+                     lr=5e-5,
                      warmup=0.1,
                      t_total=num_train_optimization_steps)
 global_step = 0
@@ -132,7 +132,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             #loss_fct = MSELoss()
             # Target tocicity is between 0 and 1
             #logits = F.sigmoid(logits)
-            loss = loss_fct(label_ids.view(-1),logits.view(-1) )
+            loss = loss_fct(label_ids,logits.view(-1) )
 
         loss.backward()
 
@@ -141,12 +141,9 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             ___, preds = torch.max(logits, 1)
         elif mode == "regression":
             #Boolean torchie tensor for toxics vs no tocisx
-            print(logits.data)
             logits = F.sigmoid(logits)
-            print(logits.data)
             preds = logits >= 0.5
             #print(logits,preds)
-            print(label_ids.data)
             ground_truth = label_ids >= 0.5
             #print(label_ids, ground_truth)
             running_corrects += torch.sum(ground_truth==preds.view(-1)) 
@@ -157,14 +154,13 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         nb_tr_examples += input_ids.size(0)
         #print(float(running_corrects), nb_tr_examples)
         nb_tr_steps += 1
-        print(nb_tr_examples, running_corrects, float(running_corrects)/nb_tr_examples)
         if (step+1)%gradient_accumulation_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
             global_step += 1
         if step%500 == 0:
             #print(running_corrects)
-            print(" Step {}: ,MSE: {}, accuracy: {}".format( step, 
+            print(" Step {}: , BCE_loss: {}, accuracy: {}".format( step, 
                 float(tr_loss)/nb_tr_examples,float(running_corrects)/nb_tr_examples))
         
     torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
