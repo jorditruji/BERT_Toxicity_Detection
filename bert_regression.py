@@ -74,7 +74,7 @@ test_sampler = RandomSampler(train_data)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-batch_size = 48
+batch_size = 64
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
           'sampler': train_sampler,
@@ -84,12 +84,12 @@ params = {'batch_size': batch_size ,
 train_dataloader = DataLoader(train_data, **params)
 
 num_labels= 1
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)
+model_old = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)
 
 # Load weights
-weights_path = ''
+weights_path = 'bert_trained_1_epoch'
 trained = torch.load(weights_path,map_location='cpu')
-model = load_weights_sequential(model, trained)
+model = load_weights_sequential(model_old, trained)
 
 
 
