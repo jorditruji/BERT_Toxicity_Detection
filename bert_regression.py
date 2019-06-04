@@ -46,26 +46,18 @@ def load_weights_sequential(target, source_state):
 # Regress or classify
 mode = 'regression'
 
+# Read dataset and train vs test indices
 data = read_from_pkl('Data_management/classification_slen84.pkl')
 idx_partitions = np.load('Data_management/partition_idx.npy').item()
 
+# Convert dataset to tensors
 all_label_ids = torch.tensor(data['all_label_ids'], dtype=torch.float)
 all_input_ids = torch.tensor(data['all_input_ids'], dtype= torch.long)
 all_input_mask =  torch.tensor(data['all_input_mask'], dtype= torch.long)
 all_segment_ids =  torch.tensor(data['all_segment_ids'], dtype= torch.long)
 all_weights =  torch.tensor(data['all_weights'], dtype= torch.long)
 
-'''
-all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
-all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
-all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
-
-if mode == "classification":
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
-elif mode == "regression":
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.float)
-'''
-
+# Create dataset clases from previous tensors
 train_data = TensorDataset(all_input_ids[idx_partitions['train']], all_input_mask[idx_partitions['train']], all_segment_ids[idx_partitions['train']], all_label_ids[idx_partitions['train']])
 train_sampler = RandomSampler(train_data)
 
@@ -89,7 +81,8 @@ num_labels= 1
 weights_path = 'bert_trained_1_epoch'
 trained = torch.load(weights_path,map_location='cpu')
 
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
+# Delete state_dict = trained if u want to take original weights
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)#, state_dict = trained)
 
 if mode == "classification":
     loss_fct = CrossEntropyLoss()
@@ -148,11 +141,12 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             ___, preds = torch.max(logits, 1)
         elif mode == "regression":
             #Boolean torchie tensor for toxics vs no tocisx
+            logits = F.sigmoid(logits)
             preds = logits >= 0.5
             ground_truth = label_ids >= 0.5
             running_corrects += torch.sum(ground_truth==preds) 
 
-
+        # Track losses, amont of samples and amount of gradient steps
         tr_loss += loss.item()
         nb_tr_examples += input_ids.size(0)
 
