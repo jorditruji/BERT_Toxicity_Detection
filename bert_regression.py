@@ -66,7 +66,7 @@ test_sampler = RandomSampler(train_data)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-batch_size = 100
+batch_size = 72
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
           'sampler': train_sampler,
