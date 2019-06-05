@@ -66,7 +66,7 @@ test_sampler = RandomSampler(train_data)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-batch_size = 64
+batch_size = 100
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
           'sampler': train_sampler,
@@ -131,7 +131,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             #loss_fct = MSELoss()
             # Target tocicity is between 0 and 1
             #logits = F.sigmoid(logits)
-            print(label_ids.size(), logits.size(), logits.view(-1).size())
+            #print(label_ids.size(), logits.size(), logits.view(-1).size())
             loss = loss_fct(label_ids,logits.view(-1) )
 
         loss.backward()
@@ -159,7 +159,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             optimizer.step()
             optimizer.zero_grad()
             global_step += 1
-        if step%5 == 0:
+        if step%1000 == 0:
             #print(running_corrects)
             print(" Step {}: , BCE_loss: {}, accuracy: {}".format( step, 
                 float(tr_loss)/nb_tr_steps,float(running_corrects)/nb_tr_examples))
