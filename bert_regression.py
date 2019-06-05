@@ -82,7 +82,7 @@ weights_path = 'bert_trained_1_epoch'
 trained = torch.load(weights_path,map_location='cpu')
 
 # Delete state_dict = trained if u want to take original weights
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels)#, state_dict = trained)
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
 
 if mode == "classification":
     loss_fct = CrossEntropyLoss()
@@ -90,7 +90,7 @@ if mode == "classification":
 elif mode == "regression":
     #Class weights
     pos_weight = torch.tensor([1.5]).to(device)
-    loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight)
+    loss_fct = BCEWithLogitsLoss()#pos_weight=pos_weight)
 
 
 param_optimizer = list(model.named_parameters())
@@ -103,7 +103,6 @@ optimizer_grouped_parameters = [
 num_train_epochs = 4
 gradient_accumulation_steps = 1
 num_train_optimization_steps = int(len(train_data) / batch_size ) * num_train_epochs
-print(num_train_optimization_steps)
 
 optimizer = BertAdam(optimizer_grouped_parameters,
                      lr=5e-5,
@@ -113,6 +112,7 @@ global_step = 0
 nb_tr_steps = 0
 tr_loss = 0
 model.train()
+history = []
 model.to(device)
 for _ in trange(int(num_train_epochs), desc="Epoch"):
     running_corrects = 0.
@@ -128,7 +128,6 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             loss = loss_fct(logits, label_ids)
         elif mode == "regression":
             # Weights
-            #pos_weight = torch.ones([64])
             #loss_fct = MSELoss()
             # Target tocicity is between 0 and 1
             #logits = F.sigmoid(logits)
@@ -148,12 +147,11 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             ground_truth = label_ids >= 0.5
             #print(label_ids, ground_truth)
             running_corrects += torch.sum(ground_truth==preds) 
-            print("acc")
-            print(torch.sum(ground_truth==preds) ,ground_truth.size(), preds.size() )
+
             #print(running_corrects, ground_truth == preds)
 
         # Track losses, amont of samples and amount of gradient steps
-        tr_loss += loss.item()*input_ids.size(0)
+        tr_loss +=  loss.item()#*input_ids.size(0)
         nb_tr_examples += input_ids.size(0)
         #print(float(running_corrects), nb_tr_examples)
         nb_tr_steps += 1
@@ -161,7 +159,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             optimizer.step()
             optimizer.zero_grad()
             global_step += 1
-        if step%500 == 0:
+        if step%5 == 0:
             #print(running_corrects)
             print(" Step {}: , BCE_loss: {}, accuracy: {}".format( step, 
                 float(tr_loss)/nb_tr_steps,float(running_corrects)/nb_tr_examples))
@@ -169,6 +167,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
     torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
     epoch_acc = running_corrects.double().detach() / nb_tr_examples
     epoch_acc = epoch_acc.data.cpu().numpy()
-    train_loss = tr_loss/nb_tr_examples
+    train_loss = tr_loss/nb_tr_steps
     print("Epoch {}, accuracy: {}, loss: {}".format(_, epoch_acc,train_loss ))
-
+    history.append([train_loss,epoch_acc])
+np.save('history.npy',history )
