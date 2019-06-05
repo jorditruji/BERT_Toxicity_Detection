@@ -132,6 +132,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             #loss_fct = MSELoss()
             # Target tocicity is between 0 and 1
             #logits = F.sigmoid(logits)
+            print(label_ids.size(), logits.size(), logits.view(-1).size())
             loss = loss_fct(label_ids,logits.view(-1) )
 
         loss.backward()
@@ -142,15 +143,17 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         elif mode == "regression":
             #Boolean torchie tensor for toxics vs no tocisx
             logits = F.sigmoid(logits)
-            preds = logits >= 0.5
+            preds = logits.view(-1) >= 0.5
             #print(logits,preds)
             ground_truth = label_ids >= 0.5
             #print(label_ids, ground_truth)
-            running_corrects += torch.sum(ground_truth==preds.view(-1)) 
+            running_corrects += torch.sum(ground_truth==preds) 
+            print("acc")
+            print(torch.sum(ground_truth==preds) ,ground_truth.size(), preds.size() )
             #print(running_corrects, ground_truth == preds)
 
         # Track losses, amont of samples and amount of gradient steps
-        tr_loss += loss.item()
+        tr_loss += loss.item()*input_ids.size(0)
         nb_tr_examples += input_ids.size(0)
         #print(float(running_corrects), nb_tr_examples)
         nb_tr_steps += 1
@@ -161,7 +164,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         if step%500 == 0:
             #print(running_corrects)
             print(" Step {}: , BCE_loss: {}, accuracy: {}".format( step, 
-                float(tr_loss)/nb_tr_examples,float(running_corrects)/nb_tr_examples))
+                float(tr_loss)/nb_tr_steps,float(running_corrects)/nb_tr_examples))
         
     torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
     epoch_acc = running_corrects.double().detach() / nb_tr_examples
