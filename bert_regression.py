@@ -84,6 +84,8 @@ trained = torch.load(weights_path,map_location='cpu')
 # Delete state_dict = trained if u want to take original weights
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
 print(model)
+if mode == "classification":
+    loss_fct = CrossEntropyLoss()
 
 elif mode == "regression":
     #Class weights
@@ -145,6 +147,9 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
 
         loss.backward()
 
+        # Select maximum score index
+        if mode == "classification":
+            ___, preds = torch.max(logits, 1)
 
             #print(running_corrects, ground_truth == preds)
         # Track losses, amont of samples and amount of gradient steps

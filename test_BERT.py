@@ -88,21 +88,12 @@ if mode == "regression":
     loss_fct = MSELoss()#BCEWithLogitsLoss()#pos_weight=pos_weight)
 
 
-param_optimizer = list(model.named_parameters())
-no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-optimizer_grouped_parameters = [
-    {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
-    {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-]
 
 num_train_epochs = 1
 gradient_accumulation_steps = 1
 num_train_optimization_steps = int(len(train_data) / batch_size ) * num_train_epochs
 
-optimizer = BertAdam(optimizer_grouped_parameters,
-                     lr=2e-5,
-                     warmup=0.1,
-                     t_total=num_train_optimization_steps)
+
 global_step = 0
 nb_tr_steps = 0
 tr_loss = 0
