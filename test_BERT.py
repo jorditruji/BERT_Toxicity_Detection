@@ -57,20 +57,19 @@ all_input_mask =  torch.tensor(data['all_input_mask'], dtype= torch.long)
 all_segment_ids =  torch.tensor(data['all_segment_ids'], dtype= torch.long)
 all_weights =  torch.tensor(data['all_weights'], dtype= torch.long)
 
+# Create dataset clases from previous tensors
 
-train_data = TensorDataset(all_input_ids[idx_partitions['val']], all_input_mask[idx_partitions['val']], all_segment_ids[idx_partitions['val']], all_label_ids[idx_partitions['val']])
-test_sampler = RandomSampler(train_data)
+test_data = TensorDataset(all_input_ids[idx_partitions['val']], all_input_mask[idx_partitions['val']], all_segment_ids[idx_partitions['val']], all_label_ids[idx_partitions['val']])
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-batch_size = 64
+batch_size = 32
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
-         # 'sampler': train_sampler,
           'num_workers': 6,
           'pin_memory': True}
 
-train_dataloader = DataLoader(train_data, **params)
+train_dataloader = DataLoader(test_data, **params)
 
 num_labels= 1
 
@@ -81,23 +80,23 @@ trained = torch.load(weights_path,map_location='cpu')
 # Delete state_dict = trained if u want to take original weights
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
 print(model)
+if mode == "classification":
+    loss_fct = CrossEntropyLoss()
 
-if mode == "regression":
+elif mode == "regression":
     #Class weights
     pos_weight = torch.tensor([1.5]).to(device)
     loss_fct = MSELoss()#BCEWithLogitsLoss()#pos_weight=pos_weight)
 
 
-
 num_train_epochs = 1
 gradient_accumulation_steps = 1
-num_train_optimization_steps = int(len(train_data) / batch_size ) * num_train_epochs
-
+num_train_optimization_steps = int(len(test_data) / batch_size ) * num_train_epochs
 
 global_step = 0
 nb_tr_steps = 0
 tr_loss = 0
-model.eval()
+model.train()
 history = []
 model.to(device)
 for _ in trange(int(num_train_epochs), desc="Epoch"):
@@ -110,8 +109,7 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
 
         # define a new function to compute loss values for both output_modes
         logits = model(input_ids, segment_ids, input_mask, labels=None)
-        if mode == "classification":
-            loss = loss_fct(logits, label_ids)
+
         elif mode == "regression":
             # Weights
             #loss_fct = MSELoss()
@@ -131,7 +129,6 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             running_corrects += torch.sum(ground_truth==preds)
 
 
-
             #print(running_corrects, ground_truth == preds)
         # Track losses, amont of samples and amount of gradient steps
         tr_loss +=  loss.item()#*input_ids.size(0)
@@ -139,9 +136,15 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         #print(float(running_corrects), nb_tr_examples)
         nb_tr_steps += 1
 
+        if step%250 == 0:
+            print(running_corrects, nb_tr_examples, nb_tr_steps)
+            print(" Step {}: , MSE_loss: {}, accuracy: {}".format( step,
+                float(tr_loss)/nb_tr_steps,float(running_corrects)/nb_tr_examples))
 
+    torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
     epoch_acc = running_corrects.double().detach() / nb_tr_examples
     epoch_acc = epoch_acc.data.cpu().numpy()
     train_loss = tr_loss/nb_tr_steps
     print("Epoch {}, accuracy: {}, loss: {}".format(_, epoch_acc,train_loss ))
     history.append([train_loss,epoch_acc])
+np.save('history.npy',history )
