@@ -58,19 +58,19 @@ all_segment_ids =  torch.tensor(data['all_segment_ids'], dtype= torch.long)
 all_weights =  torch.tensor(data['all_weights'], dtype= torch.long)
 
 
-test_data = TensorDataset(all_input_ids[idx_partitions['val']], all_input_mask[idx_partitions['val']], all_segment_ids[idx_partitions['val']], all_label_ids[idx_partitions['val']])
+train_data = TensorDataset(all_input_ids[idx_partitions['val']], all_input_mask[idx_partitions['val']], all_segment_ids[idx_partitions['val']], all_label_ids[idx_partitions['val']])
 test_sampler = RandomSampler(train_data)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-batch_size = 72
+batch_size = 64
 # Parameters of the data loader
 params = {'batch_size': batch_size ,
-          'sampler': train_sampler,
+         # 'sampler': train_sampler,
           'num_workers': 6,
           'pin_memory': True}
 
-train_dataloader = DataLoader(test_data, **params)
+train_dataloader = DataLoader(train_data, **params)
 
 num_labels= 1
 
@@ -82,7 +82,7 @@ trained = torch.load(weights_path,map_location='cpu')
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels= num_labels, state_dict = trained)
 print(model)
 
-elif mode == "regression":
+if mode == "regression":
     #Class weights
     pos_weight = torch.tensor([1.5]).to(device)
     loss_fct = MSELoss()#BCEWithLogitsLoss()#pos_weight=pos_weight)
