@@ -57,9 +57,6 @@ all_input_mask =  torch.tensor(data['all_input_mask'], dtype= torch.long)
 all_segment_ids =  torch.tensor(data['all_segment_ids'], dtype= torch.long)
 all_weights =  torch.tensor(data['all_weights'], dtype= torch.long)
 
-# Create dataset clases from previous tensors
-train_data = TensorDataset(all_input_ids[idx_partitions['train']], all_input_mask[idx_partitions['train']], all_segment_ids[idx_partitions['train']], all_label_ids[idx_partitions['train']])
-train_sampler = RandomSampler(train_data)
 
 test_data = TensorDataset(all_input_ids[idx_partitions['val']], all_input_mask[idx_partitions['val']], all_segment_ids[idx_partitions['val']], all_label_ids[idx_partitions['val']])
 test_sampler = RandomSampler(train_data)
@@ -73,12 +70,12 @@ params = {'batch_size': batch_size ,
           'num_workers': 6,
           'pin_memory': True}
 
-train_dataloader = DataLoader(train_data, **params)
+train_dataloader = DataLoader(test_data, **params)
 
 num_labels= 1
 
 # Load weights
-weights_path = 'bert_trained_1_epoch'
+weights_path = 'bert_regression_Epoch_3'
 trained = torch.load(weights_path,map_location='cpu')
 
 # Delete state_dict = trained if u want to take original weights
@@ -98,7 +95,7 @@ optimizer_grouped_parameters = [
     {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
 ]
 
-num_train_epochs = 4
+num_train_epochs = 1
 gradient_accumulation_steps = 1
 num_train_optimization_steps = int(len(train_data) / batch_size ) * num_train_epochs
 
@@ -109,7 +106,7 @@ optimizer = BertAdam(optimizer_grouped_parameters,
 global_step = 0
 nb_tr_steps = 0
 tr_loss = 0
-model.train()
+model.eval()
 history = []
 model.to(device)
 for _ in trange(int(num_train_epochs), desc="Epoch"):
@@ -143,8 +140,6 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
             running_corrects += torch.sum(ground_truth==preds)
 
 
-        loss.backward()
-
 
             #print(running_corrects, ground_truth == preds)
         # Track losses, amont of samples and amount of gradient steps
@@ -152,19 +147,10 @@ for _ in trange(int(num_train_epochs), desc="Epoch"):
         nb_tr_examples += input_ids.size(0)
         #print(float(running_corrects), nb_tr_examples)
         nb_tr_steps += 1
-        if (step+1)%gradient_accumulation_steps == 0:
-            optimizer.step()
-            optimizer.zero_grad()
-            global_step += 1
-        if step%250 == 0:
-            print(running_corrects, nb_tr_examples, nb_tr_steps)
-            print(" Step {}: , MSE_loss: {}, accuracy: {}".format( step,
-                float(tr_loss)/nb_tr_steps,float(running_corrects)/nb_tr_examples))
 
-    torch.save(model.state_dict(), 'bert_regression_Epoch_'+str(_))
+
     epoch_acc = running_corrects.double().detach() / nb_tr_examples
     epoch_acc = epoch_acc.data.cpu().numpy()
     train_loss = tr_loss/nb_tr_steps
     print("Epoch {}, accuracy: {}, loss: {}".format(_, epoch_acc,train_loss ))
     history.append([train_loss,epoch_acc])
-np.save('history.npy',history )
