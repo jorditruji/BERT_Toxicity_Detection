@@ -35,5 +35,18 @@ The original implementation of BERT we used for this project can be found at htt
 
 ### Training
 
+Different strategies has been followed by using as loss MSE between model predictions and float toxicity and also combining it with a sample weighted BCE using the binary ground-truth.
+
+The resulting training script can be found at https://github.com/jorditruji/BERT_kaggle/blob/master/bert_regression.py.
+
+### Results
+
+The model has been trained for 4 epochs using an initial LR of 2e-5, a warmup of 0.1 and Adam algorithm as optimizer:
 
 
+| Epoch        | MSE           | Accuracy  |
+| ------------- |:-------------:| -----:|
+| 1      | 1.33404746 | 0.95472092|
+| 2       | 1.17825316      |    0.95902277 |
+| 3 |1.00735244 |    0.96428235 |
+| 4 | 0.87871132      |     0.96826997 |
