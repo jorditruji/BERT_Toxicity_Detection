@@ -50,3 +50,13 @@ The model has been trained for 4 epochs using an initial LR of 2e-5, a warmup of
 | 2       | 1.17825316      |    0.95902277 |
 | 3 |1.00735244 |    0.96428235 |
 | 4 | 0.87871132      |     0.96826997 |
+
+
+The final model was tested agains our validation partition with an accuracy of  0.96269972 and a MSE of 0.92.
+
+* Note that the MSE is computed in a toxicity scale between 0 and 10.
+
+
+## Next steps
+
+Make more experiments and take part in the competition
