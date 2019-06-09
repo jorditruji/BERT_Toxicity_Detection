@@ -10,7 +10,9 @@ Previous challenges drawbacks: the models incorrectly learned to associate the n
 
 ## Dataset
 
-
+ <p align="left">
+  <img src="Captures/dataset.png"/>
+</p>
 
 ## BERT Model:
 
